@@ -60,11 +60,17 @@ document.getElementById("play-button").addEventListener("click", function () {
   let chickens = [];
   const maxChickens = 6;
 
+  let gameOver = false;
+
   document.addEventListener("keydown", (event) => {
-    if (event.code === "ArrowUp") {
-      moveUp();
-    } else if (event.code === "ArrowDown") {
-      moveDown();
+    if (gameOver && event.code === "Enter") {
+      restartGame();
+    } else if (!gameOver) {
+      if (event.code === "ArrowUp") {
+        moveUp();
+      } else if (event.code === "ArrowDown") {
+        moveDown();
+      }
     }
   });
 
@@ -143,13 +149,6 @@ document.getElementById("play-button").addEventListener("click", function () {
     if (chicken.x + chickenFrameWidth * 2 < 0) {
       chicken.x = canvas.width;
       chicken.yIndex = Math.floor(Math.random() * logPositions.length);
-
-      // Increase score when a chicken passes the canvas
-      score++;
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem("highScore", highScore);
-      }
     }
   }
 
@@ -171,7 +170,88 @@ document.getElementById("play-button").addEventListener("click", function () {
     };
   }
 
+  function checkCollision() {
+    const insectY = logPositions[insectYIndex];
+    const insectRight = insectX + spriteWidth / 2 - 10;
+    const insectBottom = insectY - 50 + spriteHeight / 2;
+
+    chickens.forEach((chicken) => {
+      const chickenY = logPositions[chicken.yIndex];
+      const chickenRight = chicken.x + chickenFrameWidth * 2;
+      const chickenBottom = chickenY - 50 + chickenFrameHeight * 2;
+
+      if (
+        insectX < chickenRight &&
+        insectRight > chicken.x &&
+        insectY - 50 < chickenBottom &&
+        insectBottom > chickenY - 50
+      ) {
+        collisionSound.play();
+        gameOver = true;
+      }
+    });
+  }
+
+  function showGameOver() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const boxWidth = 600;
+    const boxHeight = 300;
+    const boxX = (canvas.width - boxWidth) / 2;
+    const boxY = (canvas.height - boxHeight) / 2 - 40;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+    ctx.shadowBlur = 15;
+    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetY = 5;
+    drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, 20);
+
+    ctx.shadowColor = "transparent";
+
+    ctx.fillStyle = "black";
+    ctx.font = "48px 'Press Start 2P', cursive";
+    ctx.textAlign = "center";
+    ctx.shadowColor = "white";
+    ctx.shadowBlur = 10;
+    ctx.fillText("Game Over", canvas.width / 2, boxY + 80);
+
+    ctx.font = "24px 'Press Start 2P', cursive";
+    ctx.fillText("Press Enter to Restart", canvas.width / 2, boxY + 240);
+
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+
+    backgroundMusic.pause();
+  }
+
+  function drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
   function animate(timestamp) {
+    if (gameOver) {
+      showGameOver();
+      return;
+    }
+
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawPole();
@@ -190,6 +270,8 @@ document.getElementById("play-button").addEventListener("click", function () {
     }
     drawInsect();
 
+    checkCollision();
+
     // Schedule next frame
     requestAnimationFrame(animate);
   }
@@ -199,16 +281,31 @@ document.getElementById("play-button").addEventListener("click", function () {
     backgroundMusic.loop = true;
     backgroundMusic.play();
 
+    gameOver = false;
+
     requestAnimationFrame(animate);
     spawnChicken();
   }
 
   function spawnChicken() {
-    if (chickens.length < maxChickens) {
+    if (!gameOver && chickens.length < maxChickens) {
       chickens.push(createChicken());
     }
 
     const randomInterval = Math.random() * 2000 + 2000;
     setTimeout(spawnChicken, randomInterval);
+  }
+
+  function restartGame() {
+    chickens = [];
+
+    currentFrame = 0;
+    chickenCurrentFrame = 0;
+    lastFrameTime = 0;
+    chickenLastFrameTime = 0;
+    insectYIndex = 1;
+    poleX = canvas.width;
+
+    startGame();
   }
 });
