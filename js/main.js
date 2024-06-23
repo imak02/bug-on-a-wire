@@ -51,6 +51,34 @@ document.getElementById("play-button").addEventListener("click", function () {
   const logImageHeight = 20;
   const logPositions = [200, 400, 600];
 
+  document.addEventListener("keydown", (event) => {
+    if (gameOver && event.code === "Enter") {
+      restartGame();
+    } else if (!gameOver) {
+      if (event.code === "ArrowUp") {
+        moveUp();
+      } else if (event.code === "ArrowDown") {
+        moveDown();
+      }
+    }
+  });
+
+  function moveUp() {
+    if (insectYIndex > 0) {
+      insectYIndex--;
+      moveSound.currentTime = 0;
+      moveSound.play();
+    }
+  }
+
+  function moveDown() {
+    if (insectYIndex < logPositions.length - 1) {
+      insectYIndex++;
+      moveSound.currentTime = 0;
+      moveSound.play();
+    }
+  }
+
   function drawLogs() {
     const logImageX = -400;
     const logImageWidth = canvas.width * 2;
