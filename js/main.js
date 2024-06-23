@@ -9,20 +9,20 @@ document.getElementById("play-button").addEventListener("click", function () {
   canvas.height = window.innerHeight;
 
   const logImage = new Image();
-  logImage.src = "../assets/img/log.png";
+  logImage.src = "../assets/log.png";
 
   const insectSprite = new Image();
-  insectSprite.src = "../assets/img/insectSprite.png";
+  insectSprite.src = "../assets/insectSprite.png";
 
   const poleImage = new Image();
-  poleImage.src = "../assets/img/pole.png";
+  poleImage.src = "../assets/pole.png";
 
   const chickenSprite = new Image();
-  chickenSprite.src = "../assets/img/chickenSprite.png";
+  chickenSprite.src = "../assets/chickenSprite.png";
 
-  const backgroundMusic = new Audio("../assets/sounds/background.mp3");
-  const moveSound = new Audio("../assets/sounds/move.wav");
-  const collisionSound = new Audio("../assets/sounds/collision.wav");
+  const backgroundMusic = new Audio("../assets/background.mp3");
+  const moveSound = new Audio("../assets/move.wav");
+  const collisionSound = new Audio("../assets/collision.wav");
 
   let imagesLoaded = 0;
 
@@ -61,6 +61,9 @@ document.getElementById("play-button").addEventListener("click", function () {
   const maxChickens = 6;
 
   let gameOver = false;
+
+  let score = 0;
+  let highScore = localStorage.getItem("highScore") || 0;
 
   document.addEventListener("keydown", (event) => {
     if (gameOver && event.code === "Enter") {
@@ -149,6 +152,13 @@ document.getElementById("play-button").addEventListener("click", function () {
     if (chicken.x + chickenFrameWidth * 2 < 0) {
       chicken.x = canvas.width;
       chicken.yIndex = Math.floor(Math.random() * logPositions.length);
+
+      // Increase score when a chicken passes the canvas
+      score++;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("highScore", highScore);
+      }
     }
   }
 
@@ -217,6 +227,10 @@ document.getElementById("play-button").addEventListener("click", function () {
     ctx.shadowBlur = 10;
     ctx.fillText("Game Over", canvas.width / 2, boxY + 80);
 
+    ctx.font = "36px 'Press Start 2P', cursive";
+    ctx.fillText(`Score: ${score}`, canvas.width / 2, boxY + 140);
+    ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, boxY + 180);
+
     ctx.font = "24px 'Press Start 2P', cursive";
     ctx.fillText("Press Enter to Restart", canvas.width / 2, boxY + 240);
 
@@ -252,11 +266,13 @@ document.getElementById("play-button").addEventListener("click", function () {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawPole();
     updatePole();
     drawLogs();
+
     chickens.forEach((chicken) => {
       updateChicken(chicken, chicken.speed);
       drawChicken(chicken);
@@ -272,8 +288,20 @@ document.getElementById("play-button").addEventListener("click", function () {
 
     checkCollision();
 
+    ctx.fillStyle = "white";
+    ctx.font = "24px 'Press Start 2P', cursive";
+    ctx.textAlign = "left";
+    ctx.fillText(`Score: ${score}`, 20, 40);
+    ctx.fillText(`High Score: ${highScore}`, 20, 80);
+
     // Schedule next frame
     requestAnimationFrame(animate);
+  }
+
+  function increaseSpeed() {
+    chickens.forEach((chicken) => {
+      chicken.speed += 0.3;
+    });
   }
 
   function startGame() {
@@ -282,8 +310,10 @@ document.getElementById("play-button").addEventListener("click", function () {
     backgroundMusic.play();
 
     gameOver = false;
-
     requestAnimationFrame(animate);
+
+    setInterval(increaseSpeed, 3000);
+
     spawnChicken();
   }
 
@@ -298,7 +328,7 @@ document.getElementById("play-button").addEventListener("click", function () {
 
   function restartGame() {
     chickens = [];
-
+    score = 0;
     currentFrame = 0;
     chickenCurrentFrame = 0;
     lastFrameTime = 0;
