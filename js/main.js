@@ -51,15 +51,20 @@ document.getElementById("play-button").addEventListener("click", function () {
   const logImageHeight = 20;
   const logPositions = [200, 400, 600];
 
+  const chickenFrameWidth = 32;
+  const chickenFrameHeight = 32;
+  const chickenTotalFrames = 4;
+  let chickenFrameInterval = 1000 / 5;
+  let chickenLastFrameTime = 0;
+
+  let chickens = [];
+  const maxChickens = 6;
+
   document.addEventListener("keydown", (event) => {
-    if (gameOver && event.code === "Enter") {
-      restartGame();
-    } else if (!gameOver) {
-      if (event.code === "ArrowUp") {
-        moveUp();
-      } else if (event.code === "ArrowDown") {
-        moveDown();
-      }
+    if (event.code === "ArrowUp") {
+      moveUp();
+    } else if (event.code === "ArrowDown") {
+      moveDown();
     }
   });
 
@@ -118,12 +123,66 @@ document.getElementById("play-button").addEventListener("click", function () {
     );
   }
 
+  function drawChicken(chicken) {
+    const chickenY = logPositions[chicken.yIndex];
+    ctx.drawImage(
+      chickenSprite,
+      chicken.currentFrame * chickenFrameWidth,
+      0,
+      chickenFrameWidth,
+      chickenFrameHeight,
+      chicken.x,
+      chickenY - 50,
+      chickenFrameWidth * 2,
+      chickenFrameHeight * 2
+    );
+  }
+
+  function updateChicken(chicken, speed) {
+    chicken.x -= speed;
+    if (chicken.x + chickenFrameWidth * 2 < 0) {
+      chicken.x = canvas.width;
+      chicken.yIndex = Math.floor(Math.random() * logPositions.length);
+
+      // Increase score when a chicken passes the canvas
+      score++;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("highScore", highScore);
+      }
+    }
+  }
+
+  function updateChickenFrame(timestamp) {
+    if (timestamp - chickenLastFrameTime > chickenFrameInterval) {
+      chickens.forEach((chicken) => {
+        chicken.currentFrame = (chicken.currentFrame + 1) % chickenTotalFrames;
+      });
+      chickenLastFrameTime = timestamp;
+    }
+  }
+
+  function createChicken() {
+    return {
+      x: canvas.width,
+      yIndex: Math.floor(Math.random() * logPositions.length),
+      currentFrame: 0,
+      speed: 5,
+    };
+  }
+
   function animate(timestamp) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawPole();
     updatePole();
     drawLogs();
+    chickens.forEach((chicken) => {
+      updateChicken(chicken, chicken.speed);
+      drawChicken(chicken);
+    });
+
+    updateChickenFrame(timestamp);
 
     if (timestamp - lastFrameTime > frameInterval) {
       updateFrame();
@@ -140,7 +199,16 @@ document.getElementById("play-button").addEventListener("click", function () {
     backgroundMusic.loop = true;
     backgroundMusic.play();
 
-    gameOver = false;
     requestAnimationFrame(animate);
+    spawnChicken();
+  }
+
+  function spawnChicken() {
+    if (chickens.length < maxChickens) {
+      chickens.push(createChicken());
+    }
+
+    const randomInterval = Math.random() * 2000 + 2000;
+    setTimeout(spawnChicken, randomInterval);
   }
 });
