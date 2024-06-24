@@ -9,18 +9,18 @@ document.getElementById("play-button").addEventListener("click", function () {
   canvas.height = window.innerHeight;
 
   const logImage = new Image();
-  logImage.src = "./../assets/img/log.png";
+  logImage.src = "../assets/img/log.png";
 
   const insectSprite = new Image();
-  insectSprite.src = "./../assets/img/insectSprite.png";
+  insectSprite.src = "/../assets/img/insectSprite.png";
 
   const poleImage = new Image();
-  poleImage.src = "./../assets/img/pole.png";
+  poleImage.src = "/../assets/img/pole.png";
 
   const chickenSprite = new Image();
   chickenSprite.src = "./../assets/img/chickenSprite.png";
 
-  const backgroundMusic = new Audio("./../assets/sounds/background.mp3");
+  const backgroundMusic = new Audio("/../assets/sounds/background.mp3");
   const moveSound = new Audio("./../assets/sounds/move.wav");
   const collisionSound = new Audio("./../assets/sounds/collision.wav");
 
